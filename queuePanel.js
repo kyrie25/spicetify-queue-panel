@@ -135,31 +135,31 @@
 	style.id = "queue-panel";
 	style.innerHTML = `
 .main-buddyFeed-content .contentSpacing {
-  padding: 0;
+  padding: 0 !important;
 }
 .main-buddyFeed-content .contentSpacing .queue-queuePage-queuePage {
-  margin-top: 20px;
+  margin-top: 20px !important;
 }
 .main-buddyFeed-content .contentSpacing h1,
 .main-buddyFeed-content .contentSpacing .main-trackList-rowMoreButton,
 .main-buddyFeed-content .contentSpacing .main-trackList-trackListHeader {
-  display: none;
+  display: none !important;
 }
 .main-buddyFeed-content .contentSpacing .main-trackList-rowSectionEnd :nth-last-child(2) {
-  margin-right: 0;
+  margin-right: 0 !important;
 }
 .main-buddyFeed-content .contentSpacing .main-trackList-trackList[aria-colcount="2"] .main-trackList-trackListRowGrid {
-  grid-template-columns: [first] 4fr [last] minmax(70px, 1fr);
+  grid-template-columns: [first] 4fr [last] minmax(70px, 1fr) !important;
 }
 .main-buddyFeed-content .contentSpacing .main-trackList-trackList.main-trackList-indexable[aria-colcount="3"] .main-trackList-trackListRowGrid {
-  grid-template-columns: [index] 16px [first] 4fr [last] minmax(70px, 1fr);
+  grid-template-columns: [index] 16px [first] 4fr [last] minmax(70px, 1fr) !important;
 }
 .main-buddyFeed-content .contentSpacing .main-trackList-trackList.main-trackList-indexable[aria-colcount="3"] .main-trackList-trackListRowGrid:has(.main-trackList-rowSectionEnd > div > button:nth-child(2)) {
-  grid-template-columns: [index] 16px [first] 4fr [last] minmax(100px, 1fr);
+  grid-template-columns: [index] 16px [first] 4fr [last] minmax(100px, 1fr) !important;
 }
 #main:not([data-page="/queue"], [data-page="/history"]) .main-topBar-topbarContent .queue-tabBar-nav,
 #main:is([data-page="/queue"], [data-page="/history"]) .main-topBar-topbarContent:nth-child(1) .queue-tabBar-nav {
-  display: none;
+  display: none !important;
 }`;
 	document.head.appendChild(style);
 
