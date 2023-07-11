@@ -1,0 +1,7 @@
+{
+	"name": "Queue Panel",
+	"description": "Open the queue on your right sidebar/panel",
+	"preview": "assets/screenshot.png",
+	"main": "queuePanel.js",
+	"readme": "README.md"
+}
