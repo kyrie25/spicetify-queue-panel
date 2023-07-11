@@ -4,7 +4,7 @@
 		return;
 	}
 
-	const { useState } = Spicetify.React;
+	const { useState, useEffect, useMemo } = Spicetify.React;
 	const require = webpackChunkopen.push([[Symbol()], {}, re => re]);
 	const pages = {};
 
@@ -48,9 +48,65 @@
 
 	function Queue({ id }) {
 		const [isQueuePage, setQueueState] = useState(true);
+		const [needsFetch, setFetch] = useState(false);
+		const key = useMemo(() => {
+			setFetch(false);
+			return Math.random().toString(36);
+		}, [needsFetch]);
 		const label = isQueuePage
 			? Spicetify.Locale.get("playback-control.queue")
 			: Spicetify.Locale.get("view.recently-played");
+
+		useEffect(() => {
+			function getDimensions(selector) {
+				return document
+					.querySelector(".main-buddyFeed-content .queue-queuePage-queuePage > :last-child " + selector)
+					?.getBoundingClientRect();
+			}
+			// I hate myself for writing this
+			function fetchQueue() {
+				const placeholderBottom = getDimensions(".main-rootlist-bottomSentinel .main-trackList-placeholder");
+				const placeholderTop = getDimensions(".main-rootlist-topSentinel .main-trackList-placeholder");
+				const content = getDimensions(".main-rootlist-wrapper > :nth-child(2)");
+				const sidebar = document.querySelector(".Root__right-sidebar")?.getBoundingClientRect();
+
+				if (!placeholderBottom || !placeholderTop || !content) return;
+
+				scrollBottom =
+					// If the bottom placeholder is visible
+					placeholderBottom.height &&
+					// And the bottom placeholder is visible in the sidebar
+					placeholderBottom.top <= sidebar.bottom - 1 &&
+					// And the content is scrolled to the bottom
+					content.bottom <= sidebar.bottom;
+
+				if (scrollBottom) {
+					setFetch(scrollBottom);
+					return;
+				}
+
+				scrollTop =
+					// If the top placeholder is visible
+					placeholderTop.height &&
+					// And the top placeholder is visible in the sidebar
+					placeholderTop.bottom >= sidebar.top &&
+					// And the content is scrolled to the top
+					content.top >= sidebar.top;
+
+				if (scrollTop) {
+					setFetch(scrollTop);
+					return;
+				}
+			}
+
+			const viewport = document.querySelector(".main-buddyFeed-content").closest(".os-viewport");
+			// Fetch after stop scrolling for a while
+			viewport?.addEventListener("scroll", () => {
+				clearTimeout(window.queueScrollTimeout);
+				window.queueScrollTimeout = setTimeout(fetchQueue, 100);
+			});
+			return () => viewport?.removeEventListener("scroll", fetchQueue);
+		}, []);
 
 		return Spicetify.React.createElement(
 			Spicetify.ReactComponent.PanelSkeleton,
@@ -71,7 +127,7 @@
 						callback: setQueueState,
 					}),
 				}),
-				Spicetify.React.createElement(isQueuePage ? pages.QueuePage : pages.PlayHistoryPage)
+				Spicetify.React.createElement(isQueuePage ? pages.QueuePage : pages.PlayHistoryPage, { key })
 			)
 		);
 	}
@@ -144,33 +200,33 @@
 	const style = document.createElement("style");
 	style.id = "queue-panel";
 	style.innerHTML = `
-.main-buddyFeed-content .contentSpacing {
-  padding: 0 !important;
-}
-.main-buddyFeed-content .contentSpacing .queue-queuePage-queuePage {
-  margin-top: 20px !important;
-}
-.main-buddyFeed-content .contentSpacing h1,
-.main-buddyFeed-content .contentSpacing .main-trackList-rowMoreButton,
-.main-buddyFeed-content .contentSpacing .main-trackList-trackListHeader {
-  display: none !important;
-}
-.main-buddyFeed-content .contentSpacing .main-trackList-rowSectionEnd :nth-last-child(2) {
-  margin-right: 0 !important;
-}
-.main-buddyFeed-content .contentSpacing .main-trackList-trackList[aria-colcount="2"] .main-trackList-trackListRowGrid {
-  grid-template-columns: [first] 4fr [last] minmax(70px, 1fr) !important;
-}
-.main-buddyFeed-content .contentSpacing .main-trackList-trackList.main-trackList-indexable[aria-colcount="3"] .main-trackList-trackListRowGrid {
-  grid-template-columns: [index] 16px [first] 4fr [last] minmax(70px, 1fr) !important;
-}
-.main-buddyFeed-content .contentSpacing .main-trackList-trackList.main-trackList-indexable[aria-colcount="3"] .main-trackList-trackListRowGrid:has(.main-trackList-rowSectionEnd > div > button:nth-child(2)) {
-  grid-template-columns: [index] 16px [first] 4fr [last] minmax(100px, 1fr) !important;
-}
-#main:not([data-page="/queue"], [data-page="/history"]) .main-topBar-topbarContent .queue-tabBar-nav,
-#main:is([data-page="/queue"], [data-page="/history"]) .main-topBar-topbarContent:nth-child(1) .queue-tabBar-nav {
-  display: none !important;
-}`;
+  .main-buddyFeed-content .contentSpacing {
+	padding: 0 !important;
+  }
+  .main-buddyFeed-content .contentSpacing .queue-queuePage-queuePage {
+	margin-top: 20px !important;
+  }
+  .main-buddyFeed-content .contentSpacing h1,
+  .main-buddyFeed-content .contentSpacing .main-trackList-rowMoreButton,
+  .main-buddyFeed-content .contentSpacing .main-trackList-trackListHeader {
+	display: none !important;
+  }
+  .main-buddyFeed-content .contentSpacing .main-trackList-rowSectionEnd :nth-last-child(2) {
+	margin-right: 0 !important;
+  }
+  .main-buddyFeed-content .contentSpacing .main-trackList-trackList[aria-colcount="2"] .main-trackList-trackListRowGrid {
+	grid-template-columns: [first] 4fr [last] minmax(70px, 1fr) !important;
+  }
+  .main-buddyFeed-content .contentSpacing .main-trackList-trackList.main-trackList-indexable[aria-colcount="3"] .main-trackList-trackListRowGrid {
+	grid-template-columns: [index] 16px [first] 4fr [last] minmax(70px, 1fr) !important;
+  }
+  .main-buddyFeed-content .contentSpacing .main-trackList-trackList.main-trackList-indexable[aria-colcount="3"] .main-trackList-trackListRowGrid:has(.main-trackList-rowSectionEnd > div > button:nth-child(2)) {
+	grid-template-columns: [index] 16px [first] 4fr [last] minmax(100px, 1fr) !important;
+  }
+  #main:not([data-page="/queue"], [data-page="/history"]) .main-topBar-topbarContent .queue-tabBar-nav,
+  #main:is([data-page="/queue"], [data-page="/history"]) .main-topBar-topbarContent:nth-child(1) .queue-tabBar-nav {
+	display: none !important;
+  }`;
 	document.head.appendChild(style);
 
 	(function waitForQueueButton() {
