@@ -131,6 +131,16 @@
 
 	button.element.children[0].removeAttribute("stroke");
 
+	Spicetify.Panel.subPanelState(async id => {
+		if (id !== 2) return;
+		let npvQueueButton = document.querySelector(".main-nowPlayingView-nextInQueue")?.nextSibling;
+		while (!npvQueueButton) {
+			await new Promise(r => setTimeout(r, 100));
+			npvQueueButton = document.querySelector(".main-nowPlayingView-nextInQueue")?.nextSibling;
+		}
+		npvQueueButton.onclick = toggle;
+	});
+
 	const style = document.createElement("style");
 	style.id = "queue-panel";
 	style.innerHTML = `
