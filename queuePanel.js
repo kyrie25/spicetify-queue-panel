@@ -188,7 +188,8 @@
 	button.element.children[0].removeAttribute("stroke");
 
 	Spicetify.Panel.subPanelState(async id => {
-		if (id !== 2) return;
+		if (id !== Spicetify.Panel.reservedPanelIds.NowPlayingView) return;
+
 		let npvQueueButton = document.querySelector(".main-nowPlayingView-nextInQueue")?.nextSibling;
 		while (!npvQueueButton) {
 			await new Promise(r => setTimeout(r, 100));
