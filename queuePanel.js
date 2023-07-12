@@ -49,6 +49,7 @@
 	function Queue({ id }) {
 		const [isQueuePage, setQueueState] = useState(true);
 		const [needsFetch, setFetch] = useState(false);
+		const [compact, setCompact] = useState(false);
 		const key = useMemo(() => {
 			setFetch(false);
 			return Math.random().toString(36);
@@ -60,7 +61,7 @@
 		useEffect(() => {
 			function getDimensions(selector) {
 				return document
-					.querySelector(".main-buddyFeed-content .contentSpacing > div > :last-child " + selector)
+					.querySelector(".queue-panel .contentSpacing > div > :last-child " + selector)
 					?.getBoundingClientRect();
 			}
 			// I hate myself for writing this
@@ -99,7 +100,7 @@
 				}
 			}
 
-			const viewport = document.querySelector(".main-buddyFeed-content").closest(".os-viewport");
+			const viewport = document.querySelector(".queue-panel").closest(".os-viewport");
 			// Fetch after stop scrolling for a while
 			viewport?.addEventListener("scroll", () => {
 				clearTimeout(window.queueScrollTimeout);
@@ -108,16 +109,32 @@
 			return () => viewport?.removeEventListener("scroll", fetchQueue);
 		}, []);
 
+		useEffect(() => {
+			const resizeWrapper = document.querySelector(".Root__right-sidebar .os-resize-observer-host");
+			const callback = () => {
+				const sidebar = document.querySelector(".Root__right-sidebar")?.getBoundingClientRect();
+				setCompact(sidebar.width <= 340);
+			};
+			const resizeObserver = new ResizeObserver(callback);
+
+			resizeObserver.observe(resizeWrapper);
+			return () => resizeObserver.disconnect();
+		}, []);
+
 		return Spicetify.React.createElement(
 			Spicetify.ReactComponent.PanelSkeleton,
 			{
 				label,
 				className: "Root__right-sidebar",
-				style: { minWidth: "380px" },
 			},
 			Spicetify.React.createElement(
 				Spicetify.ReactComponent.PanelContent,
-				null,
+				{
+					className: Spicetify.classnames({
+						"queue-panel": true,
+						compact,
+					}),
+				},
 				Spicetify.React.createElement(Spicetify.ReactComponent.PanelHeader, {
 					title: label,
 					panel: id,
@@ -201,32 +218,41 @@
 	const style = document.createElement("style");
 	style.id = "queue-panel";
 	style.innerHTML = `
-	.main-buddyFeed-content .contentSpacing {
-	  padding: 0 !important;
+	.queue-panel .contentSpacing {
+		padding: 0 !important;
 	}
-	.main-buddyFeed-content .contentSpacing .queue-queuePage-queuePage {
-	  margin-top: 20px !important;
+	.queue-panel .queue-queuePage-queuePage {
+		margin-top: 20px !important;
 	}
-	.main-buddyFeed-content .contentSpacing h1,
-	.main-buddyFeed-content .contentSpacing .main-trackList-rowMoreButton,
-	.main-buddyFeed-content .contentSpacing .main-trackList-trackListHeader {
-	  display: none !important;
+	.queue-panel h1,
+	.queue-panel .main-trackList-rowMoreButton,
+	.queue-panel .main-trackList-trackListHeader {
+		display: none !important;
 	}
-	.main-buddyFeed-content .contentSpacing .main-trackList-rowSectionEnd :nth-last-child(2) {
-	  margin-right: 0 !important;
+	.queue-panel .main-trackList-rowSectionEnd :nth-last-child(2) {
+		margin-right: 0 !important;
 	}
-	.main-buddyFeed-content .contentSpacing .main-trackList-trackList[aria-colcount="2"] .main-trackList-trackListRowGrid {
-	  grid-template-columns: [first] 4fr [last] minmax(70px, 1fr) !important;
+	.queue-panel .main-trackList-trackList[aria-colcount="2"] .main-trackList-trackListRowGrid {
+		grid-template-columns: [first] 4fr [last] minmax(70px, 1fr) !important;
 	}
-	.main-buddyFeed-content .contentSpacing .main-trackList-trackList.main-trackList-indexable[aria-colcount="3"] .main-trackList-trackListRowGrid {
-	  grid-template-columns: [index] 16px [first] 4fr [last] minmax(70px, 1fr) !important;
+	.queue-panel .main-trackList-trackList.main-trackList-indexable[aria-colcount="3"] .main-trackList-trackListRowGrid {
+		grid-template-columns: [index] 16px [first] 4fr [last] minmax(70px, 1fr) !important;
 	}
-	.main-buddyFeed-content .contentSpacing .main-trackList-trackList.main-trackList-indexable[aria-colcount="3"] .main-trackList-trackListRowGrid:has(.main-trackList-rowSectionEnd > div > button:nth-child(2)) {
-	  grid-template-columns: [index] 16px [first] 4fr [last] minmax(100px, 1fr) !important;
+	.queue-panel main-trackList-trackList.main-trackList-indexable[aria-colcount="3"] .main-trackList-trackListRowGrid:has(.main-trackList-rowSectionEnd > div > button:nth-child(2)) {
+		grid-template-columns: [index] 16px [first] 4fr [last] minmax(100px, 1fr) !important;
+	}
+	.queue-panel.compact .main-trackList-rowSectionEnd {
+		display: none !important;
+	}
+	.queue-panel.compact .main-trackList-trackList[aria-colcount="2"] .main-trackList-trackListRowGrid {
+		grid-template-columns: [first] 4fr [last] !important;
+	}
+	.queue-panel.compact .main-trackList-trackList.main-trackList-indexable[aria-colcount="3"] .main-trackList-trackListRowGrid {
+		grid-template-columns: [index] 16px [first] 4fr [last] !important;
 	}
 	#main:not([data-page="/queue"], [data-page="/history"]) .main-topBar-topbarContent .queue-tabBar-nav,
 	#main:is([data-page="/queue"], [data-page="/history"]) .main-topBar-topbarContent:nth-child(1) .queue-tabBar-nav {
-	  display: none !important;
+		display: none !important;
 	}`;
 	document.head.appendChild(style);
 
