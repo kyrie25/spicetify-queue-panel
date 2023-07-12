@@ -73,7 +73,7 @@
 
 				if (!placeholderBottom || !placeholderTop || !content) return;
 
-				scrollBottom =
+				const scrollBottom =
 					// If the bottom placeholder is visible
 					placeholderBottom.height &&
 					// And the bottom placeholder is visible in the sidebar
@@ -86,7 +86,7 @@
 					return;
 				}
 
-				scrollTop =
+				const scrollTop =
 					// If the top placeholder is visible
 					placeholderTop.height &&
 					// And the top placeholder is visible in the sidebar
@@ -101,10 +101,11 @@
 			}
 
 			const viewport = document.querySelector(".queue-panel").closest(".os-viewport");
+			let queueScrollTimeout;
 			// Fetch after stop scrolling for a while
 			viewport?.addEventListener("scroll", () => {
-				clearTimeout(window.queueScrollTimeout);
-				window.queueScrollTimeout = setTimeout(fetchQueue, 100);
+				clearTimeout(queueScrollTimeout);
+				queueScrollTimeout = setTimeout(fetchQueue, 100);
 			});
 			return () => viewport?.removeEventListener("scroll", fetchQueue);
 		}, []);
