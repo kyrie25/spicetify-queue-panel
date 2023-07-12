@@ -225,7 +225,10 @@
 	.queue-panel .queue-queuePage-queuePage {
 		margin-top: 20px !important;
 	}
-	.queue-panel h1,
+	.queue-panel h1 {
+		font-size: 0 !important;
+		margin: 0 !important;
+	}
 	.queue-panel .main-trackList-rowMoreButton,
 	.queue-panel .main-trackList-trackListHeader {
 		display: none !important;
