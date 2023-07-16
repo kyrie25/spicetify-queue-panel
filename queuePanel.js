@@ -18,10 +18,10 @@
 	}
 
 	async function elementOnMount(selector, callback) {
-		let element = document.querySelector(selector);
+		let element = typeof selector === "function" ? selector() : document.querySelector(selector);
 		while (!element) {
 			await new Promise(r => setTimeout(r, 100));
-			element = document.querySelector(selector);
+			element = typeof selector === "function" ? selector() : document.querySelector(selector);
 		}
 		callback(element);
 	}
@@ -288,9 +288,12 @@
 		});
 	});
 
-	elementOnMount(".main-nowPlayingBar-extraControls", extraControls => {
-		const queueButton = extraControls.querySelector(".GlueDropTarget");
-		extraControls.insertBefore(button.element, queueButton);
-		queueButton.style.display = "none";
-	});
+	elementOnMount(
+		() => button.element.parentElement,
+		extraControls => {
+			const queueButton = extraControls.querySelector(".GlueDropTarget");
+			extraControls.insertBefore(button.element, queueButton);
+			queueButton.style.display = "none";
+		}
+	);
 })();
