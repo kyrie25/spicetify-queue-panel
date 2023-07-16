@@ -1,5 +1,5 @@
 (async function QueuePanel() {
-	while (!Spicetify.React || !Spicetify.Panel || !Spicetify.Platform) {
+	while (!Spicetify.Panel) {
 		await new Promise(r => setTimeout(r, 100));
 	}
 
