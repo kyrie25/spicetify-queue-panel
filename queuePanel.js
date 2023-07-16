@@ -1,12 +1,30 @@
 (async function QueuePanel() {
-	if (!Spicetify.React || !Spicetify.Panel || !Spicetify.Platform) {
-		setTimeout(QueuePanel, 100);
-		return;
+	while (!Spicetify.React || !Spicetify.Panel || !Spicetify.Platform) {
+		await new Promise(r => setTimeout(r, 100));
 	}
 
 	const { useState, useEffect, useMemo } = Spicetify.React;
 	const require = webpackChunkopen.push([[Symbol()], {}, re => re]);
 	const pages = {};
+
+	let open = false,
+		scrollPos = 0;
+
+	function getAccessorDescriptor(obj, prop) {
+		const desc = Object.getOwnPropertyDescriptor(obj, prop);
+		if (!desc) return getAccessorDescriptor(Object.getPrototypeOf(obj), prop);
+
+		return desc;
+	}
+
+	async function elementOnMount(selector, callback) {
+		let element = document.querySelector(selector);
+		while (!element) {
+			await new Promise(r => setTimeout(r, 100));
+			element = document.querySelector(selector);
+		}
+		callback(element);
+	}
 
 	function loadModule(module) {
 		const script = document.createElement("script");
@@ -19,22 +37,24 @@
 		styles.href = `/${module}.css`;
 		document.head.appendChild(styles);
 
-		fetch(`/${module}.js`)
+		fetch(script.src)
 			.then(res => res.text())
 			.then(async text => {
-				for (let pack of text.match(/(\d+):\(/g).map(str => str.slice(0, -2))) {
+				for (let pack of text.match(/(\d+): ?\(/g).map(str => str.slice(0, -2))) {
 					while (!Object.keys(require.m).includes(pack)) {
 						await new Promise(r => setTimeout(r, 100));
 					}
 
 					pack = require(pack);
 					if (pack.default) {
-						const namedModule = module
-							.slice(12)
-							.split("-")
-							.map(str => str[0].toUpperCase() + str.slice(1))
-							.join("");
-						pages[namedModule] = pack.default;
+						pages[
+							module
+								.split("-")
+								.slice(2)
+								.map(str => str[0].toUpperCase() + str.slice(1))
+								.join("")
+						] = pack.default;
+						return;
 					}
 				}
 			});
@@ -54,9 +74,7 @@
 			setFetch(false);
 			return Math.random().toString(36);
 		}, [needsFetch]);
-		const label = isQueuePage
-			? Spicetify.Locale.get("playback-control.queue")
-			: Spicetify.Locale.get("view.recently-played");
+		const label = Spicetify.Locale.get(isQueuePage ? "playback-control.queue" : "view.recently-played");
 
 		useEffect(() => {
 			function getDimensions(selector) {
@@ -64,7 +82,7 @@
 					.querySelector(".queue-panel .contentSpacing > div > :last-child " + selector)
 					?.getBoundingClientRect();
 			}
-			// I hate myself for writing this
+
 			function fetchQueue() {
 				const placeholderBottom = getDimensions(".main-rootlist-bottomSentinel .main-trackList-placeholder");
 				const placeholderTop = getDimensions(".main-rootlist-topSentinel .main-trackList-placeholder");
@@ -100,25 +118,24 @@
 				}
 			}
 
-			const viewport = document.querySelector(".queue-panel").closest(".os-viewport");
 			let queueScrollTimeout;
-			// Fetch after stop scrolling for a while
-			viewport?.addEventListener("scroll", () => {
+			const viewport = document.querySelector(".queue-panel").closest(".os-viewport");
+			const callback = () => {
 				clearTimeout(queueScrollTimeout);
 				queueScrollTimeout = setTimeout(fetchQueue, 100);
-			});
-			return () => viewport?.removeEventListener("scroll", fetchQueue);
+			};
+
+			viewport?.addEventListener("scroll", callback);
+			return () => viewport?.removeEventListener("scroll", callback);
 		}, []);
 
 		useEffect(() => {
-			const resizeWrapper = document.querySelector(".Root__right-sidebar .os-resize-observer-host");
-			const callback = () => {
+			const resizeObserver = new ResizeObserver(() => {
 				const sidebar = document.querySelector(".Root__right-sidebar")?.getBoundingClientRect();
 				setCompact(sidebar.width <= 340);
-			};
-			const resizeObserver = new ResizeObserver(callback);
+			});
 
-			resizeObserver.observe(resizeWrapper);
+			resizeObserver.observe(document.querySelector(".Root__right-sidebar .os-resize-observer-host"));
 			return () => resizeObserver.disconnect();
 		}, []);
 
@@ -154,9 +171,7 @@
 		return Spicetify.React.createElement(
 			Spicetify.ReactComponent.TooltipWrapper,
 			{
-				label: state
-					? Spicetify.Locale.get("view.recently-played")
-					: Spicetify.Locale.get("playback-control.queue"),
+				label: Spicetify.Locale.get(state ? "view.recently-played" : "playback-control.queue"),
 			},
 			Spicetify.React.createElement(
 				"button",
@@ -185,35 +200,38 @@
 		children: Spicetify.React.createElement(Queue),
 	});
 
+	function togglePanel() {
+		open = true;
+		scrollPos = document.querySelector(".Root__main-view .os-viewport").scrollTop;
+
+		toggle().then(() => (open = false));
+	}
+
 	const button = new Spicetify.Playbar.Button(
 		Spicetify.Locale.get("playback-control.queue"),
 		"queue",
-		() => {
-			const cacheScrollPos = document.querySelector(".Root__main-view .os-viewport")?.scrollTop;
-			toggle().then(() => {
-				const viewport = document.querySelector(".Root__main-view .os-viewport");
-				if (viewport && cacheScrollPos !== undefined) viewport.scrollTop = cacheScrollPos;
-			});
-		},
+		togglePanel,
 		false,
 		isActive
 	);
 
-	onStateChange(state => {
-		button.active = state;
-	});
-
 	button.element.children[0].removeAttribute("stroke");
+	onStateChange(state => (button.active = state));
 
 	Spicetify.Panel.subPanelState(async id => {
 		if (id !== Spicetify.Panel.reservedPanelIds.NowPlayingView) return;
 
-		let npvQueueButton = document.querySelector(".main-nowPlayingView-nextInQueue")?.nextSibling;
+		let npvQueueButton = document.querySelector(".main-nowPlayingView-queue button");
 		while (!npvQueueButton) {
 			await new Promise(r => setTimeout(r, 100));
-			npvQueueButton = document.querySelector(".main-nowPlayingView-nextInQueue")?.nextSibling;
+			npvQueueButton = document.querySelector(".main-nowPlayingView-queue button");
 		}
-		npvQueueButton.onclick = toggle;
+		npvQueueButton.onclick = togglePanel;
+	});
+
+	elementOnMount("#main", main => {
+		Spicetify.Platform.History.listen(({ pathname }) => (main.dataset.page = pathname));
+		main.dataset.page = Spicetify.Platform.History.location.pathname;
 	});
 
 	const style = document.createElement("style");
@@ -260,20 +278,19 @@
 	}`;
 	document.head.appendChild(style);
 
-	(function waitForQueueButton() {
-		const extraControls = button.element.parentElement;
-		if (!extraControls) {
-			setTimeout(waitForQueueButton, 100);
-			return;
-		}
-		Spicetify.Platform.History.listen(({ pathname }) => {
-			document.getElementById("main").dataset.page = pathname;
+	elementOnMount(".Root__main-view .os-viewport", viewport => {
+		const descriptor = getAccessorDescriptor(viewport, "scrollTop");
+		Object.defineProperty(viewport, "scrollTop", {
+			...descriptor,
+			set(value) {
+				descriptor.set.call(this, open ? scrollPos : value);
+			},
 		});
+	});
 
-		document.getElementById("main").dataset.page = Spicetify.Platform.History.location.pathname;
-
+	elementOnMount(".main-nowPlayingBar-extraControls", extraControls => {
 		const queueButton = extraControls.querySelector(".GlueDropTarget");
 		extraControls.insertBefore(button.element, queueButton);
 		queueButton.style.display = "none";
-	})();
+	});
 })();
