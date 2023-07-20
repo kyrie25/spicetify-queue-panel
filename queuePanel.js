@@ -77,44 +77,46 @@
 		const label = Spicetify.Locale.get(isQueuePage ? "playback-control.queue" : "view.recently-played");
 
 		useEffect(() => {
-			function getDimensions(selector) {
-				return document
-					.querySelector(".queue-panel .contentSpacing > div > :last-child " + selector)
-					?.getBoundingClientRect();
-			}
-
 			function fetchQueue() {
-				const placeholderBottom = getDimensions(".main-rootlist-bottomSentinel .main-trackList-placeholder");
-				const placeholderTop = getDimensions(".main-rootlist-topSentinel .main-trackList-placeholder");
-				const content = getDimensions(".main-rootlist-wrapper > :nth-child(2)");
-				const sidebar = document.querySelector(".Root__right-sidebar")?.getBoundingClientRect();
+				for (const rootlist of document.querySelectorAll(".queue-panel .contentSpacing > div > div")) {
+					function getDimensions(selector) {
+						return rootlist.querySelector(selector)?.getBoundingClientRect();
+					}
 
-				if (!placeholderBottom || !placeholderTop || !content) return;
+					const placeholderBottom = getDimensions(
+						".main-rootlist-bottomSentinel .main-trackList-placeholder"
+					);
+					const placeholderTop = getDimensions(".main-rootlist-topSentinel .main-trackList-placeholder");
+					const content = getDimensions(".main-rootlist-wrapper > :nth-child(2)");
+					const sidebar = document.querySelector(".Root__right-sidebar")?.getBoundingClientRect();
 
-				const scrollBottom =
-					// If the bottom placeholder is visible
-					placeholderBottom.height &&
-					// And the bottom placeholder is visible in the sidebar
-					placeholderBottom.top <= sidebar.bottom - 1 &&
-					// And the content is scrolled to the bottom
-					content.bottom <= sidebar.bottom;
+					if (!placeholderBottom || !placeholderTop || !content) return;
 
-				if (scrollBottom) {
-					setFetch(scrollBottom);
-					return;
-				}
+					const scrollBottom =
+						// If the bottom placeholder is visible
+						placeholderBottom.height &&
+						// And the bottom placeholder is visible in the sidebar
+						placeholderBottom.top <= sidebar.bottom - 1 &&
+						// And the content is scrolled to the bottom
+						content.bottom <= sidebar.bottom;
 
-				const scrollTop =
-					// If the top placeholder is visible
-					placeholderTop.height &&
-					// And the top placeholder is visible in the sidebar
-					placeholderTop.bottom >= sidebar.top &&
-					// And the content is scrolled to the top
-					content.top >= sidebar.top;
+					if (scrollBottom) {
+						setFetch(scrollBottom);
+						return;
+					}
 
-				if (scrollTop) {
-					setFetch(scrollTop);
-					return;
+					const scrollTop =
+						// If the top placeholder is visible
+						placeholderTop.height &&
+						// And the top placeholder is visible in the sidebar
+						placeholderTop.bottom >= sidebar.top &&
+						// And the content is scrolled to the top
+						content.top >= sidebar.top;
+
+					if (scrollTop) {
+						setFetch(scrollTop);
+						return;
+					}
 				}
 			}
 
