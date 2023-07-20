@@ -141,6 +141,25 @@
 			return () => resizeObserver.disconnect();
 		}, []);
 
+		// Workaround for Spotify 1.2.16 (and may be above) as Spotify broke re-rendering Recently Played page
+		useEffect(() => {
+			if (isQueuePage || Spicetify.Platform?.PlatformData.client_version_triple.localeCompare("1.2.15") !== 1)
+				return;
+
+			elementOnMount(".queue-panel .contentSpacing .main-rootlist-wrapper", async rootlist => {
+				let rootlistHeight = rootlist.querySelector(":scope > :nth-child(2)")?.getBoundingClientRect().height;
+				if (!rootlist.querySelector(":nth-child(2)")?.getBoundingClientRect().height) {
+					await new Promise(r => setTimeout(r, 100));
+					rootlistHeight = rootlist.querySelector(":scope > :nth-child(2)")?.getBoundingClientRect().height;
+				}
+
+				rootlist.style.height = rootlistHeight + "px";
+				// Hide placeholders
+				rootlist.querySelector(".main-rootlist-topSentinel").style.display = "none";
+				rootlist.querySelector(".main-rootlist-bottomSentinel").style.display = "none";
+			});
+		}, [isQueuePage]);
+
 		return Spicetify.React.createElement(
 			Spicetify.ReactComponent.PanelSkeleton,
 			{
