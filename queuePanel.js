@@ -90,7 +90,7 @@
 					const content = getDimensions(".main-rootlist-wrapper > :nth-child(2)");
 					const sidebar = document.querySelector(".Root__right-sidebar")?.getBoundingClientRect();
 
-					if (!placeholderBottom || !placeholderTop || !content) return;
+					if (!placeholderBottom || !placeholderTop || !content) continue;
 
 					const scrollBottom =
 						// If the bottom placeholder is visible
