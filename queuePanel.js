@@ -147,16 +147,21 @@
 				return;
 
 			elementOnMount(".queue-panel .contentSpacing .main-rootlist-wrapper", async rootlist => {
-				let rootlistHeight = rootlist.querySelector(":scope > :nth-child(2)")?.getBoundingClientRect().height;
-				if (!rootlist.querySelector(":nth-child(2)")?.getBoundingClientRect().height) {
-					await new Promise(r => setTimeout(r, 100));
-					rootlistHeight = rootlist.querySelector(":scope > :nth-child(2)")?.getBoundingClientRect().height;
+				let grid = rootlist.querySelector(":scope > :nth-child(2)");
+				while (!grid) {
+					await new Promise(r => setTimeout(r, 10));
+					grid = rootlist.querySelector(":scope > :nth-child(2)");
 				}
 
-				rootlist.style.height = rootlistHeight + "px";
-				// Hide placeholders
-				rootlist.querySelector(".main-rootlist-topSentinel").style.display = "none";
-				rootlist.querySelector(".main-rootlist-bottomSentinel").style.display = "none";
+				rootlist.style.height = grid.getBoundingClientRect().height + "px";
+
+				new ResizeObserver(() => {
+					rootlist.style.height =
+						rootlist.querySelector(":scope > :nth-child(2)").getBoundingClientRect().height + "px";
+					// Hide placeholders
+					rootlist.querySelector(".main-rootlist-topSentinel").style.display = "none";
+					rootlist.querySelector(".main-rootlist-bottomSentinel").style.display = "none";
+				}).observe(grid);
 			});
 		}, [isQueuePage]);
 
