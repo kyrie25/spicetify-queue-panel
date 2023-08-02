@@ -3,8 +3,17 @@
 		await new Promise(r => setTimeout(r, 100));
 	}
 
-	const { useState, useEffect, useMemo } = Spicetify.React;
+	const { useState, useEffect, useMemo, useRef } = Spicetify.React;
 	const require = webpackChunkopen.push([[Symbol()], {}, re => re]);
+	const cache = Object.keys(require.m).map(id => require(id));
+	const modules = cache
+		.filter(module => typeof module === "object")
+		.map(module => {
+			try {
+				return Object.values(module);
+			} catch {}
+		})
+		.flat();
 	const pages = {};
 
 	let open = false,
@@ -70,6 +79,7 @@
 		const [isQueuePage, setQueueState] = useState(true);
 		const [needsFetch, setFetch] = useState(false);
 		const [compact, setCompact] = useState(false);
+		const panel = useRef();
 		const key = useMemo(() => {
 			setFetch(false);
 			return Math.random().toString(36);
@@ -78,7 +88,7 @@
 
 		useEffect(() => {
 			function fetchQueue() {
-				for (const rootlist of document.querySelectorAll(".queue-panel .contentSpacing > div > div")) {
+				for (const rootlist of panel.current.querySelectorAll(".contentSpacing > div > div")) {
 					function getDimensions(selector) {
 						return rootlist.querySelector(selector)?.getBoundingClientRect();
 					}
@@ -121,7 +131,7 @@
 			}
 
 			let queueScrollTimeout;
-			const viewport = document.querySelector(".queue-panel").closest(".os-viewport");
+			const viewport = panel.current.closest(".os-viewport");
 			const callback = () => {
 				clearTimeout(queueScrollTimeout);
 				queueScrollTimeout = setTimeout(fetchQueue, 100);
@@ -156,8 +166,7 @@
 				rootlist.style.height = grid.getBoundingClientRect().height + "px";
 
 				new ResizeObserver(() => {
-					rootlist.style.height =
-						rootlist.querySelector(":scope > :nth-child(2)").getBoundingClientRect().height + "px";
+					rootlist.style.height = grid.getBoundingClientRect().height + "px";
 					// Hide placeholders
 					rootlist.querySelector(".main-rootlist-topSentinel").style.display = "none";
 					rootlist.querySelector(".main-rootlist-bottomSentinel").style.display = "none";
@@ -166,7 +175,7 @@
 		}, [isQueuePage]);
 
 		return Spicetify.React.createElement(
-			Spicetify.ReactComponent.PanelSkeleton,
+			Spicetify.ReactComponent.PanelSkeleton || modules.find(m => m?.render?.toString().includes('"section"')),
 			{
 				label,
 				className: "Root__right-sidebar",
@@ -178,6 +187,7 @@
 						"queue-panel": true,
 						compact,
 					}),
+					ref: panel,
 				},
 				Spicetify.React.createElement(Spicetify.ReactComponent.PanelHeader, {
 					title: label,
@@ -263,45 +273,45 @@
 	const style = document.createElement("style");
 	style.id = "queue-panel";
 	style.innerHTML = `
-	.queue-panel .contentSpacing {
-		padding: 0 !important;
-	}
-	.queue-panel .queue-queuePage-queuePage {
-		margin-top: 20px !important;
-	}
-	.queue-panel h1 {
-		font-size: 0 !important;
-		margin: 0 !important;
-	}
-	.queue-panel .main-trackList-rowMoreButton,
-	.queue-panel .main-trackList-trackListHeader {
-		display: none !important;
-	}
-	.queue-panel .main-trackList-rowSectionEnd :nth-last-child(2) {
-		margin-right: 0 !important;
-	}
-	.queue-panel .main-trackList-trackList[aria-colcount="2"] .main-trackList-trackListRowGrid {
-		grid-template-columns: [first] 4fr [last] minmax(70px, 1fr) !important;
-	}
-	.queue-panel .main-trackList-trackList.main-trackList-indexable[aria-colcount="3"] .main-trackList-trackListRowGrid {
-		grid-template-columns: [index] 16px [first] 4fr [last] minmax(70px, 1fr) !important;
-	}
-	.queue-panel main-trackList-trackList.main-trackList-indexable[aria-colcount="3"] .main-trackList-trackListRowGrid:has(.main-trackList-rowSectionEnd > div > button:nth-child(2)) {
-		grid-template-columns: [index] 16px [first] 4fr [last] minmax(100px, 1fr) !important;
-	}
-	.queue-panel.compact .main-trackList-rowSectionEnd {
-		display: none !important;
-	}
-	.queue-panel.compact .main-trackList-trackList[aria-colcount="2"] .main-trackList-trackListRowGrid {
-		grid-template-columns: [first] 4fr [last] !important;
-	}
-	.queue-panel.compact .main-trackList-trackList.main-trackList-indexable[aria-colcount="3"] .main-trackList-trackListRowGrid {
-		grid-template-columns: [index] 16px [first] 4fr [last] !important;
-	}
-	#main:not([data-page="/queue"], [data-page="/history"]) .main-topBar-topbarContent .queue-tabBar-nav,
-	#main:is([data-page="/queue"], [data-page="/history"]) .main-topBar-topbarContent:nth-child(1) .queue-tabBar-nav {
-		display: none !important;
-	}`;
+	  .queue-panel .contentSpacing {
+		  padding: 0 !important;
+	  }
+	  .queue-panel .queue-queuePage-queuePage {
+		  margin-top: 20px !important;
+	  }
+	  .queue-panel h1 {
+		  font-size: 0 !important;
+		  margin: 0 !important;
+	  }
+	  .queue-panel .main-trackList-rowMoreButton,
+	  .queue-panel .main-trackList-trackListHeader {
+		  display: none !important;
+	  }
+	  .queue-panel .main-trackList-rowSectionEnd :nth-last-child(2) {
+		  margin-right: 0 !important;
+	  }
+	  .queue-panel .main-trackList-trackList[aria-colcount="2"] .main-trackList-trackListRowGrid {
+		  grid-template-columns: [first] 4fr [last] minmax(70px, 1fr) !important;
+	  }
+	  .queue-panel .main-trackList-trackList.main-trackList-indexable[aria-colcount="3"] .main-trackList-trackListRowGrid {
+		  grid-template-columns: [index] 16px [first] 4fr [last] minmax(70px, 1fr) !important;
+	  }
+	  .queue-panel main-trackList-trackList.main-trackList-indexable[aria-colcount="3"] .main-trackList-trackListRowGrid:has(.main-trackList-rowSectionEnd > div > button:nth-child(2)) {
+		  grid-template-columns: [index] 16px [first] 4fr [last] minmax(100px, 1fr) !important;
+	  }
+	  .queue-panel.compact .main-trackList-rowSectionEnd {
+		  display: none !important;
+	  }
+	  .queue-panel.compact .main-trackList-trackList[aria-colcount="2"] .main-trackList-trackListRowGrid {
+		  grid-template-columns: [first] 4fr [last] !important;
+	  }
+	  .queue-panel.compact .main-trackList-trackList.main-trackList-indexable[aria-colcount="3"] .main-trackList-trackListRowGrid {
+		  grid-template-columns: [index] 16px [first] 4fr [last] !important;
+	  }
+	  #main:not([data-page="/queue"], [data-page="/history"]) .main-topBar-topbarContent .queue-tabBar-nav,
+	  #main:is([data-page="/queue"], [data-page="/history"]) .main-topBar-topbarContent:nth-child(1) .queue-tabBar-nav {
+		  display: none !important;
+	  }`;
 	document.head.appendChild(style);
 
 	elementOnMount(".Root__main-view .os-viewport", viewport => {
