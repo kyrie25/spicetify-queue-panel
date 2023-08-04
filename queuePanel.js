@@ -143,7 +143,7 @@
 
 		useEffect(() => {
 			const resizeObserver = new ResizeObserver(() => {
-				const sidebar = document.querySelector(".Root__right-sidebar")?.getBoundingClientRect();
+				const sidebar = document.querySelector(".main-buddyFeed-container")?.getBoundingClientRect();
 				setCompact(sidebar.width <= 340);
 			});
 
